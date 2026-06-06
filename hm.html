@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jefrey de la cruz </title>
+
+
+
+<style>
+  
+body{
+  margin:0;
+  font-family: Arial;
+  background: url("https://wallpaperaccess.com/full/10854788.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color:white;
+}
+
+/* Overlay oscuro */
+body::before{
+  content:"";
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.5);
+  z-index:-1;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:#ffffff10;
+  backdrop-filter: blur(10px);
+  padding:20px;
+  margin-bottom:20px;
+  border-radius:15px;
+}
+
+h1{text-align:center}
+
+input, select{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  width:180px;
+}
+
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  background:#00c6ff;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{background:#0072ff}
+
+.form{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid #ffffff30;
+  text-align:center;
+}
+
+#terminal{
+  background:#00000070;
+  height:150px;
+  overflow:auto;
+  padding:10px;
+  border-radius:10px;
+}
+</style>
+</head>
+ 
+<body>
+
+<div class="container">
+
+<h1> Sistema Académico </h1>
+
+<!-- FORM -->
+<div class="card">
+<h3> Estudiante</h3>
+
+<div class="form">
+<input id="nombre" placeholder="Nombre">
+
+<select id="curso">
+  <option value="PROG1">Programación 1</option>
+  <option value="TECWEB">Tecnoweb</option>
+  <option value="FISICA">Física</option>
+  <option value="ESTAD">Estadística</option>
+</select>
+
+<input id="matricula" type="number" placeholder="Matrícula " min="1"max="10">
+
+<input id="promedio" type="number" step="0.1" placeholder="Promedio">
+
+<button onclick="guardarEstudiante()">Guardar</button>
+</div>
+</div>
+
+<!-- BUSCAR -->
+<div class="card">
+<input id="busqueda" placeholder="Buscar estudiante...">
+</div>
+
+<!-- BOTONES -->
+<div class="card">
+<button onclick="buscar()"> Buscar</button>
+<button onclick="mostrarTodos()"> Mostrar todos</button>
+<button onclick="limpiarTodo()"> Limpiar todo</button>
+<button onclick="limpiarConsola()"> Limpiar consola</button>
+</div>
+
+<!-- TABLA -->
+<div class="card">
+<table>
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Curso</th>
+<th>Matrícula</th>
+<th>Promedio</th>
+<th>Estado</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+</div>
+
+<!-- CURSOS -->
+<div class="card">
+<h3>Cursos</h3>
+<div id="cursos"></div>
+</div>
+
+<!-- TERMINAL -->
+<div class="card">
+<div id="terminal"></div>
+</div>
+
+</div>
+
+<script>
+
+
+
+let estudiantes = JSON.parse(localStorage.getItem("estudiantes")) || [];
+
+let editIndex = null;
+
+
+const cursos = [
+  ['PROG1','Programación 1'],
+  ['TECWEB','Tecnoweb'],
+  ['FISICA','Física'],
+  ['ESTAD','Estadística']
+];
+
+
+const memoEstado = (() => {
+  const cache = {};
+  return (n) => cache[n] ?? (cache[n] = n >= 3 ? "Aprobado " : "Reprobado ");
+})();
+
+
+function log(msg){
+  document.getElementById("terminal").innerHTML += msg + "<br>";
+}
+
+
+function save(){
+  localStorage.setItem("estudiantes", JSON.stringify(estudiantes));
+}
+
+function render(lista = estudiantes){
+  const tabla = document.getElementById("tabla");
+  tabla.innerHTML = "";
+
+  lista.forEach((e,i)=>{
+    tabla.innerHTML += `
+      <tr>
+        <td>${e.nombre}</td>
+        <td>${e.curso}</td>
+        <td>${e.matricula}</td>
+        <td>${e.promedio}</td>
+        <td>${memoEstado(e.promedio)}</td>
+        <td>
+          <button onclick="editar(${i})"></button>
+          <button onclick="eliminar(${i})"></button>
+        </td>
+      </tr>
+    `;
+  });
+
+  renderCursos();
+}
+
+
+function renderCursos(){
+  const div = document.getElementById("cursos");
+  div.innerHTML = "";
+
+  cursos.forEach(c=>{
+    const count = estudiantes.filter(e=>e.curso===c[0]).length;
+    div.innerHTML += `<p> ${c[1]} → ${count}</p>`;
+  });
+}
+
+function guardarEstudiante(){
+  try{
+    const nombre = document.getElementById("nombre").value.trim();
+    const curso = document.getElementById("curso").value;
+    const matricula = Number(document.getElementById("matricula").value);
+    const promedio = Number(document.getElementById("promedio").value);
+
+    if(!nombre || !matricula || promedio < 0 || promedio > 5){
+      throw new Error("Datos inválidos");
+    }
+
+    const data = {nombre,curso,matricula,promedio};
+
+    if(editIndex !== null){
+      estudiantes[editIndex] = data;
+      editIndex = null;
+      log(" Editado");
+    } else {
+      estudiantes.push(data);
+      log(" Agregado");
+    }
+
+    save();
+    render();
+
+  }catch(err){
+    log(" " + err.message);
+  }
+}
+
+
+function eliminar(i){
+  estudiantes.splice(i,1);
+  save();
+  render();
+  log("Eliminado");
+}
+
+
+function editar(i){
+  const e = estudiantes[i];
+
+  document.getElementById("nombre").value = e.nombre;
+  document.getElementById("curso").value = e.curso;
+  document.getElementById("matricula").value = e.matricula;
+  document.getElementById("promedio").value = e.promedio;
+
+  editIndex = i;
+  log(" Editando...");
+}
+
+
+function buscar(){
+  const txt = document.getElementById("busqueda").value.toLowerCase();
+
+  const filtrados = estudiantes.filter(e =>
+    e.nombre.toLowerCase().includes(txt)
+  );
+
+  render(filtrados);
+  log(" Resultados encontrados: " + filtrados.length);
+}
+
+
+function mostrarTodos(){
+  render(estudiantes);
+  log(" Mostrando todos");
+}
+
+
+function limpiarTodo(){
+
+  document.getElementById("nombre").value = "";
+  document.getElementById("matricula").value = "";
+  document.getElementById("promedio").value = "";
+  document.getElementById("busqueda").value = "";
+
+  editIndex = null;
+
+  document.getElementById("tabla").innerHTML = "";
+
+  log(" Formulario y tabla limpiados");
+}
+
+
+function limpiarConsola(){
+  document.getElementById("terminal").innerHTML = "";
+}
+
+
+window.onload = () => render();
+
+</script>
+<script src="APP1.js"></script>
+</body>
+</html>
