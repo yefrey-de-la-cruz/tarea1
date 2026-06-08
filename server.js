@@ -8,7 +8,12 @@ app.use(express.json());
 
 let estudiantes = [];
 
-// OBTENER
+// RUTA PRINCIPAL
+app.get("/", (req,res)=>{
+res.send("Servidor funcionando 🚀");
+});
+
+// OBTENER ESTUDIANTES
 app.get("/estudiantes", (req,res)=>{
 res.json(estudiantes);
 });
@@ -58,6 +63,6 @@ res.json({
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+app.listen(PORT,()=>{
+console.log("Servidor corriendo en puerto", PORT);
 });
