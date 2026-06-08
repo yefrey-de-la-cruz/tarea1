@@ -2,7 +2,7 @@
 // ======================
 // DATOS
 // ======================
-const API = "http://192.168.1.56:3000/estudiantes";
+const API = "https://tarea1-v57u.onrender.com/estudiantes";
 let estudiantes = JSON.parse(localStorage.getItem("estudiantes")) || [];
 
 let editIndex = null;
@@ -151,4 +151,9 @@ function buscar(){
 // ======================
 // INIT
 // ======================
-window.onload = () => render();
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+    res.send("Servidor funcionando");
+});
